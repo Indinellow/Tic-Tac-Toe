@@ -6,15 +6,17 @@ class DisplayAndBoard
     @current_display= "\n ----------- \n| #{@board[0][0]} | #{@board[0][1]} | #{@board[0][2]} | \n ----------- \n| #{@board[1][0]} | #{@board[1][1]} | #{@board[1][2]} | \n ------------ \n| #{@board[2][0]} | #{@board[2][1]} | #{@board[2][2]} |\n ----------- \n "
   end
 
-  def change_board(row,column,symbol)
+  def check_if_free(row,column)
     if @board[row][column].instance_of? Integer
-      @board[row][column]=symbol
-      update_display()
       return true
     else 
-      puts "That space is already taken"
       return false
-    end 
+    end
+  end  
+
+  def change_board(row,column,symbol)
+    @board[row][column]=symbol
+    update_display()
   end 
 
   def update_display()
@@ -56,62 +58,77 @@ class Game
       symbol=gets.chomp
       @players[i-1]=Player.new(name,symbol)
     end
+  end 
   
+  def translate_location(number)
+    case number
+    when 1
+      return [0,0]
+    when 2
+      return [0,1]
+    when 3
+      return [0,2]
+    when 4
+      return [1,0]
+    when 5
+      return [1,1]
+    when 6
+      return [1,2]
+    when 7
+      return [2,0]
+    when 8
+      return [2,1]
+    when 9
+      return [2,2]
+    end
+  end 
+
   def choose_location(player)
     player_symbol=player.symbol
     puts "Pick a location #{player.name}"
-    location = gets.chomp.to_i
-    case location
-    when 1
-      @game_display.change_board(0,0,player_symbol)
-    when 2
-      @game_display.change_board(0,1,player_symbol)
-    when 3
-      @game_display.change_board(0,2,player_symbol)
-    when 4
-      @game_display.change_board(1,0,player_symbol)
-    when 5
-      @game_display.change_board(1,1,player_symbol)
-    when 6
-      @game_display.change_board(1,2,player_symbol)
-    when 7
-      @game_display.change_board(2,0,player_symbol)
-    when 8
-      @game_display.change_board(2,1,player_symbol)
-    when 9
-      @game_display.change_board(2,2,player_symbol)
+    temporary_location = gets.chomp.to_i
+    location= translate_location(temporary_location)
+    if @game_display.check_if_free(location[0],location[1])
+      @game_display.change_board(location[0],location[1],player_symbol)
     else
-      puts "Not a valid choice"
-    end
+      puts "That space is already taken, please pick another one!"
+      choose_location(player)
+    end 
   end
-end
-
-
 end 
-one_game = Game.new()
-puts one_game.game_display.current_display
-while(true)
-  one_game.choose_location(one_game.players[0])
-  if one_game.game_display.check_win(one_game.players[0].symbol)
-    puts "Player #{one_game.players[0].name} won! Congratulations"
-    puts one_game.game_display.current_display
-    break
-  end
-  puts one_game.game_display.current_display
 
-  if one_game.game_display.check_draw()
-    puts "It's a DRAW!"
-    break
-  end 
-  
-  one_game.choose_location(one_game.players[1])
-  if one_game.game_display.check_win(one_game.players[1].symbol)
-    puts "Player #{one_game.players[1].name} won! Congratulations"
-    puts one_game.game_display.current_display
-    break
-  end
+
+def play_one_game
+  one_game = Game.new()
   puts one_game.game_display.current_display
+  while(true)
+    one_game.choose_location(one_game.players[0])
+    if one_game.game_display.check_win(one_game.players[0].symbol)
+      puts "Player #{one_game.players[0].name} won! Congratulations"
+      puts one_game.game_display.current_display
+      break
+    end
+    puts one_game.game_display.current_display
+
+    if one_game.game_display.check_draw()
+      puts "It's a DRAW!"
+      break
+    end 
+    
+    one_game.choose_location(one_game.players[1])
+    if one_game.game_display.check_win(one_game.players[1].symbol)
+      puts "Player #{one_game.players[1].name} won! Congratulations"
+      puts one_game.game_display.current_display
+      break
+    end
+    puts one_game.game_display.current_display
+  end
+  puts "Do you want to play another game? If so, type Yes"
+  answer=gets.chomp.downcase
+  if answer == "yes"
+    puts "NEW GAME! "
+    play_one_game()
+  end 
 end
 
-# one_game.game_display.check_win(one_game.players[0].symbol) || one_game.game_display.check_win(one_game.players[1].symbol)
-
+play_one_game()
