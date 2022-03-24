@@ -1,18 +1,18 @@
 class DisplayAndBoard
   attr_reader :current_display, :board
-  
+
   def initialize()
-    @board=[[1,2,3],[4,5,6],[7,8,9]]
+    @board = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
     @current_display= "\n ----------- \n| #{@board[0][0]} | #{@board[0][1]} | #{@board[0][2]} | \n ----------- \n| #{@board[1][0]} | #{@board[1][1]} | #{@board[1][2]} | \n ------------ \n| #{@board[2][0]} | #{@board[2][1]} | #{@board[2][2]} |\n ----------- \n "
   end
 
-  def check_if_free(row,column)
+  def check_if_free(row, column)
     if @board[row][column].instance_of? Integer
-      return true
-    else 
-      return false
+      true
+    else
+      false
     end
-  end  
+  end
 
   def change_board(row,column,symbol)
     @board[row][column]=symbol
@@ -23,14 +23,26 @@ class DisplayAndBoard
     @current_display= "\n ----------- \n| #{@board[0][0]} | #{@board[0][1]} | #{@board[0][2]} | \n ----------- \n| #{@board[1][0]} | #{@board[1][1]} | #{@board[1][2]} | \n ------------ \n| #{@board[2][0]} | #{@board[2][1]} | #{@board[2][2]} |\n ----------- \n "
   end
 
+  def check_win_row(symbol)
+    @board[0].all? {|element| element==symbol} || @board[1].all? {|element| element==symbol} || @board[0].all? {|element| element==symbol}
+  end
+
+  def check_win_column(symbol)
+    column_boolean_1 = (@board[0][0]==symbol && @board[1][0]==symbol && @board[2][0]==symbol)
+    column_boolean_2 = (@board[0][1]==symbol && @board[1][1]==symbol && @board[2][1]==symbol)
+    column_boolean_3 = (@board[0][2]==symbol && @board[1][2]==symbol && @board[2][2]==symbol)
+
+    column_boolean_1 || column_boolean_2 || column_boolean_3
+  end
+
+  def check_win_diagonal(symbol)
+    diagonal_boolean_1 = (@board[0][0]==symbol && @board[1][1]==symbol && @board[2][2]==symbol)
+    diagonal_boolean_2 = (@board[0][2]==symbol && @board[1][1]==symbol && @board[2][0]==symbol)
+    diagonal_boolean_1 || diagonal_boolean_2
+  end
+
   def check_win(symbol)
-  row_boolean = @board[0].all? {|element| element==symbol} || @board[1].all? {|element| element==symbol} || @board[0].all? {|element| element==symbol}
-
-  column_boolean = (@board[0][0]==symbol && @board[1][0]==symbol && @board[2][0]==symbol) || (@board[0][1]==symbol && @board[1][1]==symbol && @board[2][1]==symbol) || (@board[0][2]==symbol && @board[1][2]==symbol && @board[2][2]==symbol)
-
-  diagonal_boolean = (@board[0][0]==symbol && @board[1][1]==symbol && @board[2][2]==symbol) || (@board[0][2]==symbol && @board[1][1]==symbol && @board[2][0]==symbol)
-
-  row_boolean || column_boolean || diagonal_boolean
+    check_win_row(symbol) || check_win_column(symbol) || check_win_diagonal(symbol)
   end
 
   def check_draw()
@@ -39,7 +51,7 @@ class DisplayAndBoard
 end
 
 class Player
-  attr_reader :name, :symbol
+  attr_accessor :name, :symbol
   def initialize(name,symbol)
     @name=name
     @symbol=symbol
@@ -47,47 +59,58 @@ class Player
 end 
 
 class Game 
-  attr_reader :game_display, :players
+  attr_reader :game_display, :player1, :player2
   def initialize()
-    @players=Array.new()
     @game_display=DisplayAndBoard.new()
-    for i in [1,2] do
-      puts "Enter name for Player #{i}:"
-      name=gets.chomp
-      puts "Enter symbol for Player #{i}:"
-      symbol=gets.chomp
-      @players[i-1]=Player.new(name,symbol)
+    create_players
+  end
+
+  def create_players
+    @player1 = create_one_player(1)
+    @player2 = create_one_player(2)
+    check_player_symbols
+  end
+
+  def check_player_symbols
+    while @player2.symbol == @player1.symbol
+      puts "That symbol is already taken, please choose a different one."
+      symbol = gets.chomp
+      @player2.symbol = check_symbol_length(symbol)
     end
-  end 
-  
+  end
+
+  def check_symbol_length(symbol)
+    until symbol.length == 1 do 
+      puts "That's not a valid symbol, please choose something that has the length of one"
+      symbol = gets.chomp
+    end
+    symbol
+  end
+
+  def create_one_player(i)
+    puts "Enter name for Player #{i}:"
+    name = gets.chomp
+    puts "Enter symbol for Player #{i}:"
+    symbol = gets.chomp
+    check_symbol_length(symbol)
+    Player.new(name,symbol)    
+  end
+
   def translate_location(number)
-    case number
-    when 1
-      return [0,0]
-    when 2
-      return [0,1]
-    when 3
-      return [0,2]
-    when 4
-      return [1,0]
-    when 5
-      return [1,1]
-    when 6
-      return [1,2]
-    when 7
-      return [2,0]
-    when 8
-      return [2,1]
-    when 9
-      return [2,2]
+    if number >= 1 && number <=3
+      [0,number-1]
+    elsif number >=4 && number <= 6
+      [1,number-4]
+    elsif number >=7 && number <= 9
+      [2,number-7]
     end
   end 
 
   def choose_location(player)
-    player_symbol=player.symbol
+    player_symbol = player.symbol
     puts "Pick a location #{player.name}"
     temporary_location = gets.chomp.to_i
-    location= translate_location(temporary_location)
+    location = translate_location(temporary_location)
     if @game_display.check_if_free(location[0],location[1])
       @game_display.change_board(location[0],location[1],player_symbol)
     else
@@ -95,40 +118,38 @@ class Game
       choose_location(player)
     end 
   end
-end 
 
-
-def play_one_game
-  one_game = Game.new()
-  puts one_game.game_display.current_display
-  while(true)
-    one_game.choose_location(one_game.players[0])
-    if one_game.game_display.check_win(one_game.players[0].symbol)
-      puts "Player #{one_game.players[0].name} won! Congratulations"
-      puts one_game.game_display.current_display
-      break
-    end
-    puts one_game.game_display.current_display
-
-    if one_game.game_display.check_draw()
-      puts "It's a DRAW!"
-      break
-    end 
-    
-    one_game.choose_location(one_game.players[1])
-    if one_game.game_display.check_win(one_game.players[1].symbol)
-      puts "Player #{one_game.players[1].name} won! Congratulations"
-      puts one_game.game_display.current_display
-      break
-    end
-    puts one_game.game_display.current_display
+  def play_turn(player)
+    choose_location(player)
+    puts @game_display.current_display
+    puts "Player #{player.name} won! Congratulations" if @game_display.check_win(player.symbol)
   end
-  puts "Do you want to play another game? If so, type Yes"
-  answer=gets.chomp.downcase
-  if answer == "yes"
-    puts "NEW GAME! "
-    play_one_game()
-  end 
+
+  def new_game?
+    puts "Do you want to play another game? If so, type Yes"
+    answer=gets.chomp.downcase
+    puts "NEW GAME" if answer == 'yes'
+    answer == 'yes'
+  end
+
+  def play_game 
+    puts @game_display.current_display
+    until @game_display.check_draw || @game_display.check_win(@player1.symbol) || @game_display.check_win(player2.symbol)
+      play_turn(@player1)
+      if @game_display.check_draw()
+        puts "It's a DRAW!"
+        break
+      end 
+      break if @game_display.check_win(@player1.symbol) 
+      play_turn(@player2)
+    end
+  end
 end
 
-play_one_game()
+
+one_game = Game.new
+p one_game.play_game
+
+
+#disallow using the same symbol
+#make the symbol one one char long
